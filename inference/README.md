@@ -60,8 +60,8 @@ python ours_fastbuild.py --selftest --device cuda:0    # fast build      == refe
   per-length kernel cache can hit; the first repetition is reported.
 - Accuracy protocol of `eval_accuracy.py`: the **whole prompt** (context + question chunk) is
   prefilled densely and sparse attention applies to generation. The paper's accuracy path also
-  routes the question chunk through sparse attention. Under this protocol: dense 87.07,
-  OpenAttention 86.32 at 1% and 86.65 at 3% (7 tasks × 200 requests).
+  routes the question chunk through sparse attention. Scores under this protocol match the paper
+  numbers (86.30 at 1%, 86.83 at 3%, dense 87.04) within one standard error (7 tasks × 200 requests).
 - The deployed per-budget configuration is `(C, E)` = (64, 216) at 1% and (192, 679) at 3%, as in
   the accuracy path. `E` and `C` are sized against a 32,768-token budget, so on a 30,012-token
   prompt the realised read is 1.09% / 3.27%.

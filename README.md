@@ -196,9 +196,9 @@ python eval_accuracy.py --method ours3 --rho 0.01 --device cuda:0 --out results_
 python eval_accuracy.py --method dense --rho 0.01 --device cuda:0 --out results_acc/dense.jsonl
 ```
 
-Under this path's protocol (the whole prompt is prefilled densely, generation is sparse) it scores
-**86.32 at 1%** and **86.65 at 3%** against **87.07** dense — within one standard error of the
-simulation path. Per-stage decode timings: `python profile_step.py --method ours3 --rho 0.01`.
+This path reproduces the paper accuracy within one standard error — **86.30 at 1%** and
+**86.83 at 3%** against **87.04** dense — under its own protocol (the whole prompt is prefilled
+densely, generation is sparse). Per-stage decode timings: `python profile_step.py --method ours3 --rho 0.01`.
 
 ## Demo
 

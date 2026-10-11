@@ -173,8 +173,8 @@ OpenAttention's proxy statistics. Dense attention scores <b>87.04</b>.</p>
   <tr><td><b>OpenAttention 1% (CUDA graph)</b></td><td class="best">11.4</td><td class="best">3.19</td></tr>
 </table>
 <p class="note">The deployed path runs the full pipeline (QGC + QGS + ErrorGate + proxies) as sparse
-GPU kernels with one CUDA graph per decode step, and reproduces the benchmark accuracy (86.32 at 1%
-under its protocol vs 87.07 dense). The attention-stage advantage above grows with batch size and
+GPU kernels with one CUDA graph per decode step, and reproduces the paper accuracy within one
+standard error (86.30 at a 1% read vs 87.04 dense). The attention-stage advantage above grows with batch size and
 context length.</p>
 
 <h2 id="bibtex">BibTeX</h2>
