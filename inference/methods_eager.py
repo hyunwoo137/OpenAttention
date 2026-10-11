@@ -472,6 +472,11 @@ class Ours(Method):
         super().__init__(a, B, Lmax, dev)
         from sparse_attention_hub.sparse_attention.research_attention.maskers.fixed.implementations.static_top_k import StaticTopKMasker
         self.STK = StaticTopKMasker
+        if not os.path.exists(STATIC_M):                 # restore from the packed copy on first use
+            sys.path.insert(0, os.path.join(HUB, "assets"))
+            from restore_query_metric import unpack
+            packed = os.path.join(HUB, "assets", "llama-3.1-8b-instruct.query_metric.triu.pt")
+            torch.save(unpack(torch.load(packed, map_location="cpu")), STATIC_M)
         st = torch.load(STATIC_M, map_location="cpu")
         self.Mpre = st["M"].float().to(dev)                                  # (L,HQ,D,D) pre-RoPE
         self._inv_freq = st["inv_freq"].float().to(dev)

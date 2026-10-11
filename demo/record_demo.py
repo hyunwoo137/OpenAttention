@@ -76,7 +76,7 @@ def main():
     def prefill():
         C.phase, C.brow = "prefill", 0
         out = model(input_ids=ids, position_ids=pos0, use_cache=False, logits_to_keep=1)
-        return out.logits[:, -1].argmax(-1)
+        return out.logits[:, -1].argmax(-1, keepdim=True)
 
     def set_step(s):
         C.n = L0 + s + 1

@@ -1037,8 +1037,15 @@ def main() -> None:
     methods = [m.strip() for m in args.methods.split(",")]
     bin_sizes = [int(x) for x in args.bin_sizes.split(",")]
 
-    if args.selector == "hat" and methods != ["dense"] and not Path(HAT_KW["hat_weight_file"]).exists():
-        raise FileNotFoundError(f"HAT weights not found: {HAT_KW['hat_weight_file']}")
+    _hat_methods = {"HAT", "UTA-HAT", "MultiBin-HAT", "vAttention", "vAttention-HAT"}
+    _needs_hat = bool(_hat_methods & set(methods)) or (
+        args.selector == "hat" and any(m not in _hat_methods | {"dense", "magicpig"} for m in methods))
+    if _needs_hat and not Path(HAT_KW["hat_weight_file"]).exists():
+        raise FileNotFoundError(
+            f"HAT weights not found: {HAT_KW['hat_weight_file']}\n"
+            "Only the HashAttention / vAttention baselines (and the HAT selector) need them:\n"
+            "  git clone https://github.com/xAlg-ai/HashAttention-1.0\n"
+            "  export HAT_ARTIFACTS=/path/to/HashAttention-1.0/artifacts")
 
     jobs = []
     for rho in densities:
