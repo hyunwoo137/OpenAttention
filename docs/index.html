@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OpenAttention</title>
+<meta name="description" content="OpenAttention: One Percent Is Enough with Tail Proxies — sparse attention that keeps 99% of dense accuracy at a 1% KV-cache read.">
+<meta property="og:title" content="OpenAttention: One Percent Is Enough with Tail Proxies">
+<meta property="og:description" content="Sparse attention that keeps 99% of dense accuracy at a 1% KV-cache read, with a 10x faster fused decode kernel.">
+<meta property="og:image" content="static/fig_density.png">
+<style>
+  :root{
+    --ink:#1b1f27; --sub:#5b6472; --line:#e5e8ee; --bg:#ffffff; --soft:#f6f8fb;
+    --acc:#0f766e; --acc2:#b45309; --card:#ffffff;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font:17px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif}
+  .wrap{max-width:980px;margin:0 auto;padding:0 16px 80px}
+  header{padding:64px 0 8px;text-align:center}
+  h1{font-size:44px;line-height:1.15;margin:0 0 10px;letter-spacing:-.5px}
+  h1 .sub{display:block;font-size:24px;color:var(--sub);font-weight:600;margin-top:6px}
+  .authors{color:var(--sub);margin:14px 0 4px;font-size:17px}
+  .venue{color:var(--sub);font-size:15px;margin-bottom:22px}
+  .btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:18px 0 8px}
+  .btn{display:inline-flex;align-items:center;gap:7px;padding:9px 18px;border-radius:999px;
+       background:var(--ink);color:#fff;text-decoration:none;font-size:15px;font-weight:600;
+       border:1.5px solid var(--ink)}
+  .btn:hover{opacity:.85}
+  .btn.ghost{background:#fff;color:var(--ink)}
+  .btn.soon{background:#fff;color:var(--sub);border-color:var(--line);cursor:default}
+  h2{font-size:28px;margin:56px 0 14px;letter-spacing:-.3px}
+  h3{font-size:20px;margin:28px 0 8px}
+  p{margin:10px 0}
+  .tldr{background:var(--soft);border:1px solid var(--line);border-radius:14px;padding:18px 22px;margin-top:28px}
+  .tldr b{color:var(--ink)}
+  .stats{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:22px 0}
+  .stat{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;text-align:center}
+  .stat .big{font-size:34px;font-weight:800;color:var(--acc)}
+  .stat .lab{color:var(--sub);font-size:14px;margin-top:2px}
+  figure{margin:22px 0}
+  figure img{width:100%;border:1px solid var(--line);border-radius:12px;background:#fff}
+  figcaption{color:var(--sub);font-size:14.5px;margin-top:8px;line-height:1.5}
+  video{width:100%;border-radius:12px;border:1px solid var(--line);background:#000}
+  table{border-collapse:collapse;width:100%;font-size:15px;margin:14px 0}
+  th,td{padding:7px 10px;border-bottom:1px solid var(--line);text-align:center}
+  th{background:var(--soft)}
+  td:first-child,th:first-child{text-align:left}
+  .best{font-weight:800;color:var(--acc)}
+  .note{color:var(--sub);font-size:14.5px}
+  pre{background:#14181f;color:#dbe2ea;border-radius:12px;padding:16px;overflow-x:auto;font-size:14px;position:relative}
+  .copy{position:absolute;top:10px;right:10px;background:#2a313c;color:#dbe2ea;border:0;border-radius:8px;
+        padding:6px 12px;font-size:13px;cursor:pointer}
+  .copy:hover{background:#39424f}
+  ol.method li{margin:8px 0}
+  footer{margin-top:70px;border-top:1px solid var(--line);padding-top:18px;color:var(--sub);font-size:14px;text-align:center}
+  @media (max-width:640px){h1{font-size:32px}.stats{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <h1>OpenAttention<span class="sub">One Percent Is Enough with Tail Proxies</span></h1>
+  <div class="authors">Anonymous authors</div>
+  <div class="venue">Paper under double-blind review &middot; arXiv preprint coming soon</div>
+  <div class="btns">
+    <span class="btn soon">&#128196; Paper (arXiv soon)</span>
+    <a class="btn" href="https://github.com/hyunwoo137/OpenAttention">&#128187; Code</a>
+    <a class="btn ghost" href="#demo">&#127909; Live demo</a>
+    <a class="btn ghost" href="#bibtex">&#128278; BibTeX</a>
+  </div>
+</header>
+
+<div class="tldr">
+  <b>TL;DR</b> — Sparse attention must do something with the 99% of the KV cache it does not read.
+  <b>Discarding</b> that tail biases the output and <b>sampling</b> it fails at low reads.
+  OpenAttention folds every unread token into a few <b>count-aware cluster proxies</b> and lets an
+  <b>ErrorGate</b> spend the exact-read budget where the estimated error is largest. The result:
+  <b>99% of dense accuracy at a 1% read</b> on RULER-32K HARD (86.30 vs 87.04, best baseline 48.22),
+  state-of-the-art across models and context lengths, and a fused decode kernel that runs the
+  attention stage <b>10&times; faster</b> than dense attention.
+</div>
+
+<div class="stats">
+  <div class="stat"><div class="big">99%</div><div class="lab">of dense accuracy at a 1% read<br>(86.30 vs 87.04, RULER-32K HARD)</div></div>
+  <div class="stat"><div class="big">10&times;</div><div class="lab">faster decode attention stage<br>(OpenAttention.flash, 1% read, batch 32)</div></div>
+  <div class="stat"><div class="big">4.6&times;</div><div class="lab">faster decoding than the stock HF dense path<br>(52.2 &rarr; 11.4 ms/token, batch 1, H100)</div></div>
+</div>
+
+<h2 id="demo">Demo: same GPU, same model, 1% of the reads</h2>
+<video src="static/demo.mp4" autoplay muted loop playsinline controls poster="static/demo_poster.png"></video>
+<p class="note">Llama-3.1-8B-Instruct generating from a 30,012-token document on one H100, batch 1.
+Left: Hugging Face dense attention out of the box (default SDPA backend, eager). Right: the deployed
+OpenAttention decode path (1% total read, fused Triton selection, one CUDA graph per step).
+Recorded in real time with <code>demo/record_demo.py</code>; both runs stream tokens with one host
+sync per token, exactly as a server would.</p>
+
+<h2>Method in one minute</h2>
+<video src="static/explainer.mp4" muted loop playsinline controls poster="static/explainer_poster.png"></video>
+
+<h2>The problem: what happens to the unread tail?</h2>
+<figure>
+  <img src="static/fig_tailtreat.png" alt="Tail treatments: discard, sample, proxies">
+  <figcaption><b>Figure:</b> Three ways to treat the tokens a sparse method does not read.
+  (a) Top-k methods discard the tail, biasing the softmax. (b) MagicPIG and vAttention sample it,
+  but the sampling error grows sharply as the read shrinks &mdash; below a 5% read the tail likely holds
+  heavy hitters the selector missed. (c) OpenAttention folds the whole tail into count-aware cluster
+  proxies: one token per cluster carrying its mean key, mean value and count, so the attention mass
+  is preserved.</figcaption>
+</figure>
+<p>Two findings drive the design. First, the <i>simplest possible proxy</i> &mdash; one token folding the
+entire tail into its count-aware mean &mdash; already yields lower output error than a sample at every
+read behind a practical selector. Second, in closed form, at low reads sampling nearly
+<i>doubles</i> the weight error of discarding while a single proxy stays below it.</p>
+
+<h2>The pipeline</h2>
+<figure>
+  <img src="static/fig_method.png" alt="OpenAttention pipeline">
+  <figcaption><b>Figure:</b> One decode step. QGS scans int8 key codes and picks the top-k;
+  ErrorGate ranks clusters by estimated weight error and water-fills the exact-read budget;
+  everything unread becomes its cluster's proxy; OpenAttention.flash fuses all three streams into
+  one online-softmax pass.</figcaption>
+</figure>
+<ol class="method">
+  <li><b>QGC — Query-Geometry Clustering.</b> Keys are clustered once per prefill in a rank-16
+      projection aligned with the directions queries actually probe (the top eigenvectors of
+      M = &frac12;M<sub>st</sub> + &frac12;M<sub>q</sub>). Training-free; the static metric
+      M<sub>st</sub> is measured once on 18 held-out requests.</li>
+  <li><b>QGS — Query-Geometry Selector.</b> Each step scans rank-32 int8 key codes in the same
+      geometry and takes the top-k. No learned hash functions, no per-model training.</li>
+  <li><b>ErrorGate.</b> Each cluster caches count, mean and diagonal-variance statistics. ErrorGate
+      estimates each cluster's softmax-weight error and allocates the exact-read budget by
+      water-filling &mdash; unlike prior methods that rank clusters by centroid score alone.</li>
+  <li><b>Count-aware proxies.</b> Every token still unread joins its cluster's proxy with logit
+      z&#772;<sub>b</sub> + log n<sub>b</sub> and the mean value, keeping the softmax mass-preserving.</li>
+  <li><b>OpenAttention.flash.</b> A fused Triton kernel computes selected tokens, expanded tokens
+      and proxies in one online-softmax pass.</li>
+</ol>
+
+<h2>Accuracy at matched total reads</h2>
+<p>RULER-32K HARD (qa_1, qa_2, vt, fwe, niah_multikey_2/3, niah_multivalue; 200 requests each),
+Llama-3.1-8B-Instruct. Every stream a method reads is charged against its budget, including
+OpenAttention's proxy statistics. Dense attention scores <b>87.04</b>.</p>
+<table>
+  <tr><th>Total read</th><th>MagicPIG</th><th>HashAttention</th><th>vAttention</th><th>OpenAttention</th></tr>
+  <tr><td>10%</td><td>52.52</td><td>81.23</td><td>83.08</td><td class="best">87.08</td></tr>
+  <tr><td>5%</td><td>34.42</td><td>71.55</td><td>68.86</td><td class="best">86.82</td></tr>
+  <tr><td>3%</td><td>24.01</td><td>63.48</td><td>55.74</td><td class="best">86.83</td></tr>
+  <tr><td>1%</td><td>10.53</td><td>48.22</td><td>36.29</td><td class="best">86.30</td></tr>
+</table>
+<figure>
+  <img src="static/fig_radars.png" alt="Per-task accuracy radars at 10/5/3/1% reads">
+  <figcaption><b>Figure:</b> Per-task accuracy relative to dense (grey, 100%) at 10, 5, 3 and 1%
+  total reads. The baselines collapse as the read shrinks; OpenAttention stays within one point of
+  dense down to a 1% read. It also transfers: best at a 3% read on DeepSeek-R1-Distill-Llama-8B
+  (73.49, dense 73.46) and Mistral-7B (64.83, dense 65.46), and across 16K&ndash;96K contexts.</figcaption>
+</figure>
+
+<h2>Speed</h2>
+<figure>
+  <img src="static/fig_latency.png" alt="Attention-stage latency vs batch and context">
+  <figcaption><b>Figure:</b> Decode attention stage, Llama-3.1-8B shapes on one H100.
+  OpenAttention.flash reads 1&ndash;3% of the KV rows plus the proxies and stays well under fused dense
+  SDPA as batch and context grow; the unfused gather paths of prior methods are <i>slower</i> than
+  dense.</figcaption>
+</figure>
+<h3>Attention stage (ms per layer, 32K context)</h3>
+<table>
+  <tr><th>Budget</th><th>Batch</th><th>dense SDPA</th><th>OpenAttention (PyTorch)</th><th>OpenAttention.flash</th></tr>
+  <tr><td>1%</td><td>1</td><td>0.062</td><td>0.265</td><td class="best">0.047</td></tr>
+  <tr><td>1%</td><td>32</td><td>1.196</td><td>0.463</td><td class="best">0.114</td></tr>
+  <tr><td>3%</td><td>1</td><td>0.061</td><td>0.262</td><td class="best">0.067</td></tr>
+  <tr><td>3%</td><td>32</td><td>1.194</td><td>1.260</td><td class="best">0.233</td></tr>
+</table>
+<h3>End to end (real 30K-token prompt, prefill + 128 decode steps, one H100)</h3>
+<table>
+  <tr><th></th><th>ms/token (B=1)</th><th>end-to-end s (B=1)</th><th>ms/token (B=8)</th><th>end-to-end s (B=8)</th></tr>
+  <tr><td>dense, HF default (SDPA&rarr;cuDNN, eager)</td><td>52.2</td><td>8.33</td><td>54.5</td><td>20.38</td></tr>
+  <tr><td>dense, SDPA FlashAttention backend</td><td>17.6</td><td>3.89</td><td>22.2</td><td>16.44</td></tr>
+  <tr><td>dense, split-K Triton + CUDA graph</td><td>8.9</td><td>2.79</td><td>18.4</td><td>15.93</td></tr>
+  <tr><td><b>OpenAttention 1% (CUDA graph)</b></td><td class="best">11.4</td><td class="best">3.19</td><td class="best">20.6</td><td class="best">16.64</td></tr>
+</table>
+<p class="note">The deployed path runs the full pipeline (QGC + QGS + ErrorGate + proxies) as sparse
+GPU kernels with one CUDA graph per decode step, and reproduces the benchmark accuracy (86.32 at 1%
+under its protocol vs 87.07 dense). At 32K/batch&nbsp;1 the decode step is dominated by everything
+around attention, so a CUDA-graph dense path remains slightly faster end to end; the attention-stage
+advantage above grows with batch size and context length.</p>
+
+<h2 id="bibtex">BibTeX</h2>
+<pre id="bib"><button class="copy" onclick="navigator.clipboard.writeText(document.getElementById('bibtxt').innerText).then(()=>{this.innerText='copied!';setTimeout(()=>this.innerText='copy',1200)})">copy</button><code id="bibtxt">@article{openattention2026,
+  title   = {OpenAttention: One Percent Is Enough with Tail Proxies},
+  author  = {Anonymous},
+  journal = {Under review},
+  year    = {2026}
+}</code></pre>
+
+<footer>
+  Code: <a href="https://github.com/hyunwoo137/OpenAttention">github.com/hyunwoo137/OpenAttention</a> (Apache-2.0)
+  &middot; built on the public sparse-attention-hub framework &middot; page hand-rolled, no template
+</footer>
+
+</div>
+</body>
+</html>

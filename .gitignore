@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+results/
+results_*/
+inference/results_*/
+demo/runs/
+latency_*.json
+sweep_*.json
+hat_artifacts/
+# restored from the packed copy on first use
+assets/llama-3.1-8b-instruct.query_metric.pt

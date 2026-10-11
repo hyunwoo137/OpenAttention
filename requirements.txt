@@ -1,0 +1,28 @@
+# Tested with Python 3.11, CUDA 13, one NVIDIA H100 (94 GB).
+torch==2.13.0
+transformers==5.15.0
+accelerate==1.14.0
+triton==3.7.1
+datasets==5.0.1
+huggingface_hub
+sentencepiece
+numpy
+pandas
+pyarrow
+scipy
+scikit-learn
+matplotlib
+seaborn
+pyyaml
+tqdm
+ray
+# metric modules imported by the benchmark package
+bert-score
+fuzzywuzzy
+jieba
+nltk
+rouge
+
+# demo video rendering only (not needed for evaluation):
+# pillow
+# imageio-ffmpeg
