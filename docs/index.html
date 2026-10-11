@@ -144,6 +144,7 @@ Llama-3.1-8B-Instruct. Every stream a method reads is charged against its budget
 OpenAttention's proxy statistics. Dense attention scores <b>87.04</b>.</p>
 <table>
   <tr><th>Total read</th><th>MagicPIG</th><th>HashAttention</th><th>vAttention</th><th>OpenAttention</th></tr>
+  <tr><td>100% (dense)</td><td>&mdash;</td><td>&mdash;</td><td>&mdash;</td><td>87.04</td></tr>
   <tr><td>10%</td><td>52.52</td><td>81.23</td><td>83.08</td><td class="best">87.08</td></tr>
   <tr><td>5%</td><td>34.42</td><td>71.55</td><td>68.86</td><td class="best">86.82</td></tr>
   <tr><td>3%</td><td>24.01</td><td>63.48</td><td>55.74</td><td class="best">86.83</td></tr>
@@ -158,13 +159,6 @@ OpenAttention's proxy statistics. Dense attention scores <b>87.04</b>.</p>
 </figure>
 
 <h2>Speed</h2>
-<figure>
-  <img src="static/fig_latency.png" alt="Attention-stage latency vs batch and context">
-  <figcaption><b>Figure:</b> Decode attention stage, Llama-3.1-8B shapes on one H100.
-  OpenAttention.flash reads 1&ndash;3% of the KV rows plus the proxies and stays well under fused dense
-  SDPA as batch and context grow; the unfused gather paths of prior methods are <i>slower</i> than
-  dense.</figcaption>
-</figure>
 <h3>Attention stage (ms per layer, 32K context, batch 32)</h3>
 <table>
   <tr><th>Budget</th><th>dense SDPA</th><th>OpenAttention (PyTorch)</th><th>OpenAttention.flash</th></tr>
