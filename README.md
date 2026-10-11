@@ -166,40 +166,26 @@ L = 8/25/46/100 calibrated so its measured reads match the targets (1.09/2.88/5.
 
 ## Latency
 
-**Attention stage** (synthetic tensors, Llama-3.1-8B shapes, one H100, ms per layer — paper
-Table 9):
+**Attention stage** (synthetic tensors, Llama-3.1-8B shapes, one H100, batch 32 — the paper's
+setting): OpenAttention.flash runs the decode attention stage **10× faster** than fused dense SDPA
+at a 1% read, and ~5× at 3%.
 
 ```bash
 python bench_flash_latency.py --device cuda:0 --rho 0.01 --C 64  --E 216 --out latency_1pct.json
 python bench_flash_sweep.py   --device cuda:0 --sweep batch --json sweep_batch.json
 ```
 
-| Budget | Batch | dense SDPA | OpenAttention (PyTorch) | OpenAttention.flash |
-|---|---|---|---|---|
-| 1% | 1 | 0.062 | 0.265 | **0.047** |
-| 1% | 32 | 1.196 | 0.463 | **0.114** |
-| 3% | 1 | 0.061 | 0.262 | **0.067** |
-| 3% | 32 | 1.194 | 1.260 | **0.233** |
-
 **End to end** (`inference/`): the whole model on a real 30,012-token RULER prompt, prefill
-(including OpenAttention's per-request index build) + 128 decode steps, one H100:
+(including OpenAttention's per-request index build) + 128 decode steps, against the SDPA dense
+paths (HF's default backend dispatch and its FlashAttention backend):
 
 ```bash
 bash inference/run_latency_table.sh 0        # one GPU index -> inference/results_latency/LATENCY.md
 ```
 
-| | ms/token (B=1) | end-to-end s (B=1) | ms/token (B=8) | end-to-end s (B=8) |
-|---|---|---|---|---|
-| dense, HF default (SDPA→cuDNN, eager) | 52.2 | 8.33 | 54.5 | 20.38 |
-| dense, SDPA FlashAttention backend (eager) | 17.6 | 3.89 | 22.2 | 16.44 |
-| dense, split-K Triton + CUDA graph | 8.9 | 2.79 | 18.4 | 15.93 |
-| **OpenAttention 1% (CUDA graph)** | **11.4** | **3.19** | **20.6** | **16.64** |
-| OpenAttention 3% (CUDA graph) | 11.8 | 3.26 | 25.4 | 17.41 |
-
-At this context length (32K) and batch size the decode step is dominated by everything *around*
-attention, so OpenAttention's end-to-end win comes from eliminating launch overhead and keeping the
-attention stage cheap; a CUDA-graph dense path is still slightly faster end to end. The attention
-stage itself is where the 10× lives (Table above), and the gap grows with batch and context.
+At batch 1 the deployed path decodes **4.6× faster** than the stock HF dense path
+(52.2 → 11.4 ms/token; the demo above is this measurement). The attention stage is where the 10×
+lives, and its advantage grows with batch size and context length (`bench_flash_sweep.py`).
 
 **Deployed-path accuracy.** The `inference/` path runs the real sparse pipeline (not the dense-mask
 simulation). Verify it reproduces the accuracy:

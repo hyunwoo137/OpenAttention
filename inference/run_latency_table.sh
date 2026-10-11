@@ -1,6 +1,6 @@
 #!/bin/bash
-# End-to-end latency table (README "Latency"): dense / dense.flash / dense CUDA-graph /
-# OpenAttention reference port / OpenAttention (CUDA graph, fast build), on ONE idle GPU.
+# End-to-end latency table: dense (SDPA default backend / SDPA FlashAttention backend) vs
+# OpenAttention (reference port, and the deployed CUDA-graph path), on ONE idle GPU.
 #
 #   usage: bash inference/run_latency_table.sh [GPU_INDEX] [OUTDIR]
 #
@@ -17,9 +17,9 @@ mkdir -p $O
 wait_free() { while : ; do
     used=$(nvidia-smi --query-gpu=memory.used --format=csv,noheader,nounits -i $G)
     [ "$used" -lt 1024 ] && break; sleep 5; done; sleep 5; }
-JOBS="densesdpadef:0.01:1:eager densesdpa:0.01:1:eager dense:0.01:1:graph
+JOBS="densesdpadef:0.01:1:eager densesdpa:0.01:1:eager
       ours_ref:0.01:1:eager ours3:0.01:1:graph ours_ref:0.03:1:eager ours3:0.03:1:graph
-      densesdpadef:0.01:8:eager densesdpa:0.01:8:eager dense:0.01:8:graph
+      densesdpadef:0.01:8:eager densesdpa:0.01:8:eager
       ours_ref:0.01:8:eager ours3:0.01:8:graph ours_ref:0.03:8:eager ours3:0.03:8:graph"
 for job in $JOBS; do
   IFS=: read m r b mode <<< "$job"

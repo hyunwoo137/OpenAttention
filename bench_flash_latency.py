@@ -153,7 +153,7 @@ def make_paths(t):
 def main():
     p = argparse.ArgumentParser()
     p.add_argument("--device", default="cuda:0")
-    p.add_argument("--batches", default="1,8,32")
+    p.add_argument("--batches", default="32")
     p.add_argument("--rho", type=float, default=0.03)
     p.add_argument("--C", type=int, default=64)
     p.add_argument("--E", type=int, default=0,

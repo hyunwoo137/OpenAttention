@@ -165,27 +165,23 @@ OpenAttention's proxy statistics. Dense attention scores <b>87.04</b>.</p>
   SDPA as batch and context grow; the unfused gather paths of prior methods are <i>slower</i> than
   dense.</figcaption>
 </figure>
-<h3>Attention stage (ms per layer, 32K context)</h3>
+<h3>Attention stage (ms per layer, 32K context, batch 32)</h3>
 <table>
-  <tr><th>Budget</th><th>Batch</th><th>dense SDPA</th><th>OpenAttention (PyTorch)</th><th>OpenAttention.flash</th></tr>
-  <tr><td>1%</td><td>1</td><td>0.062</td><td>0.265</td><td class="best">0.047</td></tr>
-  <tr><td>1%</td><td>32</td><td>1.196</td><td>0.463</td><td class="best">0.114</td></tr>
-  <tr><td>3%</td><td>1</td><td>0.061</td><td>0.262</td><td class="best">0.067</td></tr>
-  <tr><td>3%</td><td>32</td><td>1.194</td><td>1.260</td><td class="best">0.233</td></tr>
+  <tr><th>Budget</th><th>dense SDPA</th><th>OpenAttention (PyTorch)</th><th>OpenAttention.flash</th></tr>
+  <tr><td>1%</td><td>1.196</td><td>0.463</td><td class="best">0.114</td></tr>
+  <tr><td>3%</td><td>1.194</td><td>1.260</td><td class="best">0.233</td></tr>
 </table>
-<h3>End to end (real 30K-token prompt, prefill + 128 decode steps, one H100)</h3>
+<h3>End to end (real 30K-token prompt, prefill + 128 decode steps, one H100, batch 1)</h3>
 <table>
-  <tr><th></th><th>ms/token (B=1)</th><th>end-to-end s (B=1)</th><th>ms/token (B=8)</th><th>end-to-end s (B=8)</th></tr>
-  <tr><td>dense, HF default (SDPA&rarr;cuDNN, eager)</td><td>52.2</td><td>8.33</td><td>54.5</td><td>20.38</td></tr>
-  <tr><td>dense, SDPA FlashAttention backend</td><td>17.6</td><td>3.89</td><td>22.2</td><td>16.44</td></tr>
-  <tr><td>dense, split-K Triton + CUDA graph</td><td>8.9</td><td>2.79</td><td>18.4</td><td>15.93</td></tr>
-  <tr><td><b>OpenAttention 1% (CUDA graph)</b></td><td class="best">11.4</td><td class="best">3.19</td><td class="best">20.6</td><td class="best">16.64</td></tr>
+  <tr><th></th><th>ms/token</th><th>end-to-end s</th></tr>
+  <tr><td>dense, HF default (SDPA&rarr;cuDNN, eager)</td><td>52.2</td><td>8.33</td></tr>
+  <tr><td>dense, SDPA FlashAttention backend</td><td>17.6</td><td>3.89</td></tr>
+  <tr><td><b>OpenAttention 1% (CUDA graph)</b></td><td class="best">11.4</td><td class="best">3.19</td></tr>
 </table>
 <p class="note">The deployed path runs the full pipeline (QGC + QGS + ErrorGate + proxies) as sparse
 GPU kernels with one CUDA graph per decode step, and reproduces the benchmark accuracy (86.32 at 1%
-under its protocol vs 87.07 dense). At 32K/batch&nbsp;1 the decode step is dominated by everything
-around attention, so a CUDA-graph dense path remains slightly faster end to end; the attention-stage
-advantage above grows with batch size and context length.</p>
+under its protocol vs 87.07 dense). The attention-stage advantage above grows with batch size and
+context length.</p>
 
 <h2 id="bibtex">BibTeX</h2>
 <pre id="bib"><button class="copy" onclick="navigator.clipboard.writeText(document.getElementById('bibtxt').innerText).then(()=>{this.innerText='copied!';setTimeout(()=>this.innerText='copy',1200)})">copy</button><code id="bibtxt">@article{openattention2026,

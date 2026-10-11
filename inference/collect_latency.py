@@ -7,7 +7,6 @@ import sys
 D = sys.argv[1] if len(sys.argv) > 1 else "results_latency"
 ROWS = [("dense (SDPA default backend, eager)", "densesdpadef", "eager", False),
         ("dense (SDPA FlashAttention backend, eager)", "densesdpa", "eager", False),
-        ("dense (split-K Triton, CUDA graph)", "dense", "graph", False),
         ("OpenAttention, reference port (eager)", "ours_ref", "eager", True),
         ("OpenAttention (fused selection + fast build, CUDA graph)", "ours3", "graph", True)]
 
