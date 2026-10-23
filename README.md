@@ -2,7 +2,7 @@
 
 # OpenAttention: One Percent Is Enough with Tail Proxies
 
-[**Project page**](https://hyunwoo137.github.io/OpenAttention/) · **Paper: arXiv coming soon** (under double-blind review)
+[**Paper (arXiv:2610.30951)**](https://arxiv.org/abs/2610.30951) · [**Project page**](https://hyunwoo137.github.io/OpenAttention/)
 
 <p align="center">
   <img src="assets/demo.gif" width="880" alt="Dense attention vs OpenAttention, side by side, generating from a 30K-token document">
@@ -236,13 +236,13 @@ timestamp per token; the renderer replays both runs side by side in real time.
 
 ## Citation
 
-The paper is under double-blind review; an arXiv preprint is coming soon. Until then:
+If you find OpenAttention useful, please cite:
 
 ```bibtex
-@article{openattention2026,
+@article{yu2026openattention,
   title   = {OpenAttention: One Percent Is Enough with Tail Proxies},
-  author  = {Anonymous},
-  journal = {Under review},
+  author  = {Yu, Hyunwoo and Lee, Jongbeom and Kim, Hyunbin and Park, Sungjun and Choi, Jaemin and Yang, Jincheol and Moon, Seunghun and Hyun, Bongjoon and Sohn, Kyomin and Kong, Kyeongbo and Kang, Suk-Ju},
+  journal = {arXiv preprint arXiv:2610.30951},
   year    = {2026}
 }
 ```
