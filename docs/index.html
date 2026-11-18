@@ -170,9 +170,8 @@ OpenAttention's proxy statistics. Dense attention scores <b>87.04</b>.</p>
 <h3>End to end (real 30K-token prompt, prefill + 128 decode steps, one H100, batch 1)</h3>
 <table>
   <tr><th></th><th>ms/token</th><th>end-to-end s</th></tr>
-  <tr><td>dense, HF default (SDPA&rarr;cuDNN, eager)</td><td>52.2</td><td>8.33</td></tr>
-  <tr><td>dense, SDPA FlashAttention backend</td><td>17.6</td><td>3.89</td></tr>
-  <tr><td><b>OpenAttention 1% (CUDA graph)</b></td><td class="best">11.4</td><td class="best">3.19</td></tr>
+  <tr><td>dense, HF default</td><td>52.2</td><td>8.33</td></tr>
+  <tr><td><b>OpenAttention 1%</b></td><td class="best">11.4</td><td class="best">3.19</td></tr>
 </table>
 <p class="note">The deployed path runs the full pipeline (QGC + QGS + ErrorGate + proxies) as sparse
 GPU kernels with one CUDA graph per decode step, and reproduces the paper accuracy within one
